@@ -1,0 +1,5 @@
+settings.json
+claude.json
+*.tmp
+.tools/
+__pycache__/

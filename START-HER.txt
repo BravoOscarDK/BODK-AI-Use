@@ -1,0 +1,59 @@
+﻿BODK-AI-Use 2.1 — Windows 10 / 11
+================================
+
+Kør Installer.cmd. Installationen gælder din bruger og starter automatisk
+ved login. Appen viser navn, symbol, 5t og Uge med procenter direkte
+oven på den primære, vandrette proceslinje til venstre for systemikonerne.
+Den har ingen almindelig programknap eller ikoner ved uret.
+
+Visningen følger proceslinjens placering og skjules ved automatisk skjul
+og fuldskærmsprogrammer. Den finder proceslinjen igen efter Explorer-genstart.
+Den ligger oven på bjælken og reserverer ikke plads til sig selv:
+Windows flytter derfor ikke appknapperne for at give plads til den.
+Træk visningen vandret med venstre museknap til et ledigt område.
+Placeringen gemmes. Højreklik > Nulstil placering gendanner udgangspunktet.
+Lodret proceslinje og ekstra skærmes proceslinjer understøttes ikke.
+
+Codex og Claude vises som to kompakte rækker med procenter for 5 timer
+og uge. Vælg én udbyder for én række som i eksemplet.
+Hver udbyder har navn og et genkendeligt symbol: terminalmærke
+for Codex og solmærke for Claude. Symbolerne er tegnede udbydermærker.
+Begge udbydere vises som standard. Højreklik på visningen for at vælge
+udbyder, lyst tema, brugt/resterende, interval eller demotilstand.
+Hold musen over procenterne for måletidspunkt og nulstilling.
+Demotilstand viser Demo CX / Demo CL ved eksempelværdierne.
+Orange og rød betyder højt forbrug, også ved visning af resterende kvote.
+En streg betyder, at der ikke findes en gyldig måling.
+
+OPGRADERING FRA KVOTEBLIK
+Afinstallér den gamle Kvoteblik med dens Afinstaller.cmd, inden du
+installerer BODK-AI-Use. Ret også Claude-statuslinjens sti som nedenfor.
+
+CODEX
+Installér den officielle Codex CLI, og log ind med codex login.
+CLI skal kunne findes i PATH. Genstart BODK-AI-Use efter CLI-installation.
+Tallene gælder Codex-kvoter, som kontoen stiller til rådighed.
+
+CLAUDE CODE
+Kræver en Claude Code-version og konto, der sender rate_limits til
+statuslinjen. Tilføj statusLine på øverste niveau i ~/.claude/settings.json.
+Bevar filens øvrige egenskaber og gem din eventuelle gamle statuslinje.
+
+"statusLine": {
+  "type": "command",
+  "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:/Users/DITNAVN/AppData/Local/BODK-AI-Use/ClaudeStatus.ps1\""
+}
+
+Udskift DITNAVN med dit Windows-brugernavn. Den installerede mappe er
+%LOCALAPPDATA%\BODK-AI-Use. Genstart Claude Code og send en besked.
+Claude-tallene opdateres, når Claude Code sender nye målinger.
+
+AFINSTALLATION
+Fjern Claude-statuslinjen eller gendan din tidligere opsætning.
+Kør Afinstaller.cmd, eller vælg BODK-AI-Use under Installerede apps.
+Det fjerner autostart, programmet og de lokale målinger.
+
+FORHÅNDSVISNING OG KONTROL
+powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\BODK-AI-Use.ps1 -Demo -Preview
+viser et separat eksempelvindue uden placering på proceslinjen.
+Test-Display.ps1 kontrollerer visningen uden at åbne et vindue.
