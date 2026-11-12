@@ -1,4 +1,4 @@
-﻿BODK-AI-Use 2.1 — Windows 10 / 11
+﻿BODK-AI-Use 2.2 — Windows 10 / 11
 ================================
 
 Kør Installer.cmd. Installationen gælder din bruger og starter automatisk
@@ -57,3 +57,7 @@ FORHÅNDSVISNING OG KONTROL
 powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\BODK-AI-Use.ps1 -Demo -Preview
 viser et separat eksempelvindue uden placering på proceslinjen.
 Test-Display.ps1 kontrollerer visningen uden at åbne et vindue.
+
+SPROG / LANGUAGE
+Dansk / English: brug Sprog / Language i widgettens menu.
+Valget gemmes automatisk. Se README.md for komplet opsaetning og sletning.

@@ -16,13 +16,25 @@ Billederne viser selve widgettens Windows-kontroller med **demotal**, ikke en m�
 
 ## Installation
 
-1. Vælg **Code → Download ZIP** på GitHub, og pak hele ZIP-filen ud.
+1. [Download projektet som ZIP](https://github.com/BravoOscarDK/BODK-AI-Use/archive/refs/heads/main.zip), eller vælg **Code → Download ZIP**. Pak hele ZIP-filen ud, før du fortsætter.
 2. Dobbeltklik på **Installer.cmd**.
 3. Tallene vises til venstre for systemikonerne i den primære proceslinje.
 
 Installationen gælder din Windows-bruger og kræver ikke administratorrettigheder. **Programmet starter automatisk, når du logger ind i Windows.** Det bruger den indbyggede Windows PowerShell 5.1 og Windows Forms.
 
 Har du den gamle Kvoteblik installeret, skal du først afinstallere den via dens Afinstaller.cmd. Opdatér også din Claude-statuslinjes sti.
+
+Installationen installerer selve widgetten. Følg derefter **Codex** og/eller **Claude Code** nedenfor for at få rigtige tal. En almindelig ChatGPT- eller Claude-desktopapp alene giver ikke widgetten kvotedata.
+
+### Opdatering
+
+Download og udpak den nye ZIP, og kør **Installer.cmd** igen. Installationen lukker den gamle BODK-AI-Use og starter den nye udgave. Dine eksisterende indstillinger og lokale målinger bevares. Du behøver ikke afinstallere først.
+
+## Sprog / Language
+
+Højreklik på visningen → **Sprog / Language** → **Dansk** eller **English**. Valget gælder menuer, perioderne `5t`/`5h` og `Uge`/`Week` samt programmets egne statusbeskeder. Det gemmes og bruges efter næste Windows-login.
+
+Ved første start vælges dansk på et dansk Windows-visningssprog, ellers engelsk. Valget ændrer ikke Windows, Claude eller Codex. Installationsprogrammets konsoltekst og denne README er på dansk; beskeder fra eksterne programmer kan beholde deres eget sprog.
 
 ## Brug
 
@@ -43,24 +55,61 @@ Placeringen følger den primære, vandrette proceslinje. Koden skjuler visningen
 
 ## Codex
 
-Codex CLI skal være installeret, være tilgængelig i `PATH` og være logget ind med `codex login`. Genstart BODK-AI-Use, hvis CLI'en lige er blevet installeret.
+1. Installér **Codex CLI til Windows** efter [OpenAI's officielle vejledning](https://learn.chatgpt.com/docs/codex/cli). Installér den i Windows, så den kan startes fra Windows PowerShell; en installation kun inde i WSL er ikke tilstrækkelig til denne widget.
+2. Åbn et nyt PowerShell-vindue, og kontrollér installation og login:
+
+   ```powershell
+   codex --version
+   codex login
+   ```
+
+3. Følg loginforløbet med din ChatGPT-konto. Se også [OpenAI's vejledning om login](https://learn.chatgpt.com/docs/auth).
+4. Genstart BODK-AI-Use fra Start-menuen, hvis CLI'en lige er blevet installeret. Afslut først den kørende widget via højreklik → **Afslut / Exit**.
+5. Højreklik → **Udbyder / Provider** → **Codex** eller **Begge / Both**, og vælg **Opdatér nu / Refresh now**. Vent på, at kontoen returnerer kvoterne.
 
 Programmet læser de femtimers- og ugekvoter, som Codex-kontoen stiller til rådighed via CLI'ens lokale app-server. Det er Codex-forbrug, ikke en samlet måling af almindelig ChatGPT-brug. Kontoen skal tilbyde de relevante kvoter.
 
 ## Claude Code
 
-Kræver en Claude Code-version og konto, der sender kvotedata (`rate_limits`) til statuslinjen. Tilføj følgende egenskab på øverste niveau i din Claude Code-brugerfil `~/.claude/settings.json`:
+1. Installér **Claude Code i Windows** efter [Anthropics officielle vejledning](https://code.claude.com/docs/en/setup). Den officielle WinGet-mulighed er:
+
+   ```powershell
+   winget install Anthropic.ClaudeCode
+   ```
+
+2. Åbn et nyt terminalvindue, start `claude`, og gennemfør login. Brug en konto og version, der sender femtimers- og ugekvoter til statuslinjen. En API-konto eller manglende kvotefelter kan give streger i widgetten.
+3. Installér BODK-AI-Use, før du tilføjer statuslinjen. Åbn `%USERPROFILE%\.claude\settings.json`. Tag en kopi først, hvis filen allerede findes. Tilføj `statusLine` på øverste niveau; bevar øvrige indstillinger. Hvis filen er ny eller tom, kan hele dette eksempel bruges:
 
 ```json
-"statusLine": {
-  "type": "command",
-  "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:/Users/DITNAVN/AppData/Local/BODK-AI-Use/ClaudeStatus.ps1\""
+{
+  "statusLine": {
+    "type": "command",
+    "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:/Users/DITNAVN/AppData/Local/BODK-AI-Use/ClaudeStatus.ps1\""
+  }
 }
 ```
 
-Erstat `DITNAVN` med dit Windows-brugernavn. Bevar filens øvrige egenskaber og gyldig JSON. Gem en eventuel eksisterende statuslinje, før du erstatter den.
+4. Erstat stien med din faktiske installationssti. Find den ved at åbne `%LOCALAPPDATA%\BODK-AI-Use` i Stifinder. Brug skråstreger som i eksemplet. Gem en eventuel eksisterende `statusLine`, før du erstatter den; denne opsætning overtager Claude-statuslinjen.
+5. Genstart Claude Code, send en besked, og vent på et svar. Vælg **Claude** eller **Begge / Both** i widgetten, og vælg **Opdatér nu / Refresh now**.
 
-Genstart Claude Code, og send en besked. BODK-AI-Use læser den seneste lokale måling; nye Claude-tal afhænger af, hvornår Claude Code sender dem. En måling vises som en streg efter dens nulstillingstidspunkt, indtil der kommer nye data.
+BODK-AI-Use læser den seneste lokale måling; nye Claude-tal afhænger af, hvornår Claude Code sender dem. En måling vises som en streg efter dens nulstillingstidspunkt, indtil der kommer nye data. Felterne er beskrevet i [Anthropics officielle statuslinjevejledning](https://code.claude.com/docs/en/statusline#rate-limit-usage).
+
+## Når du bruger både Claude og Codex
+
+Gennemfør begge opsætninger ovenfor, og vælg **Udbyder / Provider → Begge / Both**. Der er to uafhængige login: ChatGPT-kontoen i Codex CLI og Claude-kontoen i Claude Code. Widgetten forbinder ikke kontiene og kræver ikke, at du indsætter adgangskoder eller API-nøgler i den.
+
+Codex hentes med det valgte interval. Claude vises fra den seneste statuslinjemåling, så Claude Code skal have sendt en måling først. Du kan derfor godt få tal i den ene række og streger i den anden.
+
+### Hvis der kun vises streger
+
+| Problem | Kontrollér |
+| --- | --- |
+| Codex mangler | Kør `codex --version` i Windows PowerShell, gennemfør `codex login`, og genstart widgetten efter installation eller ændret PATH. |
+| Claude mangler | Kontrollér stien i `statusLine`, genstart Claude Code, og send en besked. Se om `%LOCALAPPDATA%\BODK-AI-Use\claude.json` bliver opdateret. |
+| Claude har ingen kvotefelter | Kontrollér konto og Claude Code-version. Widgetten kan ikke beregne manglende kvoter ud fra kontekstforbrug. |
+| Gamle tal | Hold musen over tallene. Claude opdateres først ved nye statuslinjedata; efter nulstilling afventer widgetten en ny måling. |
+| Tallene ændrer sig ikke som forventet | Slå **Demotilstand / Demo mode** fra, og vælg **Opdatér nu / Refresh now**. |
+| Visningen dækker appknapper | Træk den vandret til et ledigt område. |
 
 ## Lokale data
 
@@ -68,7 +117,12 @@ Program og indstillinger installeres i `%LOCALAPPDATA%\BODK-AI-Use`. Claude-broe
 
 ## Afinstallation
 
-Fjern Claude-statuslinjen, eller gendan din tidligere opsætning. Kør derefter **Afinstaller.cmd**, eller afinstallér BODK-AI-Use fra Windows' installerede apps. Det fjerner programmet, autostart og lokale målinger.
+1. Hvis du har tilføjet Claude-statuslinjen, fjern **kun den `statusLine`-egenskab**, du tilføjede, eller gendan din tidligere statuslinje. Bevar resten af `%USERPROFILE%\.claude\settings.json` og gyldig JSON.
+2. Kør **Afinstaller.cmd** fra den udpakkede projektmappe. Alternativt: Åbn **Windows-indstillinger → Apps → Installerede apps → BODK-AI-Use → Afinstaller**.
+3. Afinstallationen lukker widgetten og fjerner installationsmappen, lokale målinger, indstillinger, Start-menuens genvej og automatisk opstart.
+4. Du kan derefter slette den udpakkede projektmappe og ZIP-filen manuelt, hvis du vil fjerne downloadet også.
+
+Claude Code, Codex CLI, deres login og øvrige indstillinger bliver ikke afinstalleret. Du behøver ikke fjerne dem for at slette widgetten.
 
 ## Udvikling og kontrol
 

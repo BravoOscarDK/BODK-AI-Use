@@ -36,7 +36,7 @@ try {
         $null = New-Item -Path $registry -Force
         $properties = @{
             DisplayName = 'BODK-AI-Use'
-            DisplayVersion = '2.1.0'
+            DisplayVersion = '2.2.0'
             InstallLocation = $root
             UninstallString = ('"{0}" -NoProfile -ExecutionPolicy Bypass -File "{1}" -Uninstall' -f $powershell,(Join-Path $root 'Setup.ps1'))
         }

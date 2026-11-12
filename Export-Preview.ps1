@@ -6,6 +6,7 @@ $source = $source.Replace('[Windows.Forms.Application]::Run($form)', @'
 $directory=Join-Path $root 'docs'
 $null=New-Item -ItemType Directory -Path $directory -Force
 $config.provider='Begge'
+$config.language='da'
 foreach ($theme in 'dark','light') {
     $config.light=($theme -eq 'light')
     $config.remaining=$false

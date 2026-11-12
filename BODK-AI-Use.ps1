@@ -30,15 +30,49 @@ $stop = New-Object Threading.EventWaitHandle($false, [Threading.EventResetMode]:
 $root = $PSScriptRoot
 $settingsFile = Join-Path $root 'settings.json'
 $intervals = @(30,60,120,300,600,900,1800)
-$config = [pscustomobject]@{ seconds=60; remaining=$false; light=$false; provider='Begge'; offset=0 }
+$config = [pscustomobject]@{ seconds=60; remaining=$false; light=$false; provider='Begge'; offset=0; language=$(if ([Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName -eq 'da') { 'da' } else { 'en' }) }
 try {
     $saved = Get-Content -LiteralPath $settingsFile -Raw -ErrorAction Stop | ConvertFrom-Json
+    if ($saved.language -in 'da','en') { $config.language = $saved.language }
     if ($saved.seconds -in $intervals) { $config.seconds = [int]$saved.seconds }
     if ($saved.provider -in 'Codex','Claude','Begge') { $config.provider = $saved.provider }
     if ($null -ne $saved.offset) { $config.offset = [Math]::Max(0,[Math]::Min(10000,[int]$saved.offset)) }
     $config.remaining = $saved.remaining -eq $true
     $config.light = $saved.light -eq $true
 } catch {}
+$english = @{
+    'Opdatér nu' = 'Refresh now'
+    'Vis resterende' = 'Show remaining'
+    'Lyst tema' = 'Light theme'
+    'Demotilstand' = 'Demo mode'
+    'Udbyder' = 'Provider'
+    'Begge' = 'Both'
+    'Opdateringsinterval' = 'Refresh interval'
+    'Afslut' = 'Exit'
+    'Nulstil placering' = 'Reset position'
+    'Sprog' = 'Language'
+    'Venter på Codex' = 'Waiting for Codex'
+    'Venter på Claude Code' = 'Waiting for Claude Code'
+    'Kvotedata utilgængelige' = 'Quota data unavailable'
+    'Afventer ny måling' = 'Waiting for a new reading'
+    'Codex CLI mangler i PATH.' = 'Codex CLI is missing from PATH.'
+    'Codex kunne ikke hente kvoter. Kontrollér login.' = 'Could not read Codex quotas. Check login.'
+    'Codex svarede ikke i tide.' = 'Codex timed out.'
+    'Kontoen returnerede ingen 5t- eller ugekvote.' = 'Account returned no 5h or weekly quota.'
+    'Indstillingerne kunne ikke gemmes.' = 'Could not save settings.'
+    '5t' = '5h'
+    'Uge' = 'Week'
+    'Målt' = 'Observed'
+    'Sidst' = 'Last reading'
+    'tilbage' = 'remaining'
+    'brugt' = 'used'
+    'Nul' = 'Reset'
+    'sek.' = 'sec.'
+ }
+function T([string]$text) {
+    if ($config.language -eq 'en' -and $english.ContainsKey($text)) { return $english[$text] }
+    return $text
+}
 $script:demoMode = [bool]$Demo
 $script:codexData = @{}
 $script:claudeData = $null
@@ -55,7 +89,8 @@ $demoItem = $menu.Items.Add('Demotilstand')
 $providerMenu = $menu.Items.Add('Udbyder')
 foreach ($name in 'Codex','Claude','Begge') {
     $item = $providerMenu.DropDownItems.Add($name)
-    $item.Add_Click({ param($sender,$eventArgs) $config.provider=$sender.Text; Save-Settings })
+    $item.Tag = $name
+    $item.Add_Click({ param($sender,$eventArgs) $config.provider=[string]$sender.Tag; Save-Settings })
 }
 $intervalMenu = $menu.Items.Add('Opdateringsinterval')
 foreach ($seconds in $intervals) {
@@ -64,13 +99,37 @@ foreach ($seconds in $intervals) {
     $item.Tag = $seconds
     $item.Add_Click({ param($sender,$eventArgs) $config.seconds=[int]$sender.Tag; Save-Settings })
 }
+$languageMenu = $menu.Items.Add('Sprog')
+foreach ($entry in @(@{code='da'; label='Dansk'},@{code='en'; label='English'})) {
+    $item=$languageMenu.DropDownItems.Add($entry.label)
+    $item.Tag=$entry.code
+    $item.Add_Click({ param($sender,$eventArgs) $config.language=[string]$sender.Tag; Save-Settings })
+}
 $null = $menu.Items.Add((New-Object Windows.Forms.ToolStripSeparator))
 $exitItem = $menu.Items.Add('Afslut')
+function Update-Language {
+    $refreshItem.Text=T 'Opdatér nu'
+    $modeItem.Text=T 'Vis resterende'
+    $themeItem.Text=T 'Lyst tema'
+    $demoItem.Text=T 'Demotilstand'
+    $providerMenu.Text=T 'Udbyder'
+    $intervalMenu.Text=T 'Opdateringsinterval'
+    $exitItem.Text=T 'Afslut'
+    $positionItem.Text=T 'Nulstil placering'
+    $languageMenu.Text=T 'Sprog'
+    foreach ($item in $providerMenu.DropDownItems) { $item.Text=T ([string]$item.Tag) }
+    foreach ($item in $languageMenu.DropDownItems) { $item.Checked=$item.Tag -eq $config.language }
+    foreach ($item in $intervalMenu.DropDownItems) {
+        $seconds=[int]$item.Tag
+        $item.Text=if ($seconds -lt 60) { "$seconds $(T 'sek.')" } else { "$($seconds / 60) min." }
+    }
+}
+
 
 function Save-Settings {
     try {
         $config | ConvertTo-Json | Set-Content -LiteralPath $settingsFile -Encoding UTF8 -ErrorAction Stop
-    } catch { [Windows.Forms.MessageBox]::Show('Indstillingerne kunne ikke gemmes.', 'BODK-AI-Use') | Out-Null }
+    } catch { [Windows.Forms.MessageBox]::Show((T 'Indstillingerne kunne ikke gemmes.'), 'BODK-AI-Use') | Out-Null }
     $script:nextRefresh = [DateTime]::MinValue
     Update-Icons
 }
@@ -202,6 +261,7 @@ function Place-Taskbar {
     [BodkTaskbar]::SetWindowPos($form.Handle,[IntPtr](-1),$x,$y,$width,$height,0x10) | Out-Null
 }
 function Update-Icons {
+    Update-Language
     $form.BackColor = if ($config.light) { [Drawing.Color]::FromArgb(231,239,245) } else { [Drawing.Color]::FromArgb(24,24,24) }
     $form.ForeColor = if ($config.light) { [Drawing.Color]::FromArgb(30,37,48) } else { [Drawing.Color]::White }
     $rowIndex=0
@@ -219,7 +279,8 @@ function Update-Icons {
         $short = if ($provider -eq 'Codex') { 'CX' } else { 'CL' }
         $data = if ($provider -eq 'Codex') { $script:codexData } else { $script:claudeData.windows }
         foreach ($window in '300','10080') {
-            $period = if ($window -eq '300') { '5t' } else { 'Uge' }
+            $period = if ($window -eq '300') { T '5t' } else { T 'Uge' }
+            $cards[$provider].Controls[$(if ($window -eq '300') { 2 } else { 4 })].Text=$period
             $key = "$provider-$window"
 
             $usage = if ($data -is [Collections.IDictionary]) { $data[$window] } elseif ($data) { $data.$window }
@@ -227,10 +288,11 @@ function Update-Icons {
             if ($usage.reset -gt 0) {
                 try { $reset = [DateTimeOffset]::FromUnixTimeSeconds([long]$usage.reset).ToLocalTime() } catch {}
             }
-            $status = if ($provider -eq 'Codex') { $script:codexStatus } else { 'Venter på Claude Code' }
+            $status = if ($provider -eq 'Codex') { T $script:codexStatus } else { T 'Venter på Claude Code' }
+            if ($provider -eq 'Codex' -and $script:codexStatus -eq 'Sidst') { $status = (T 'Sidst') + ' ' + $script:lastGood.ToString('dd/MM HH:mm') }
             if ($provider -eq 'Claude' -and $script:claudeData.observed) {
                 $observed = [DateTimeOffset]::FromUnixTimeSeconds([long]$script:claudeData.observed).ToLocalTime()
-                $status = 'Målt ' + $observed.ToString('dd/MM HH:mm')
+                $status = (T 'Målt') + ' ' + $observed.ToString('dd/MM HH:mm')
             }
             if ($script:demoMode) {
                 $usage = @{ used = $(if ($provider -eq 'Codex') { if ($window -eq '300') { 84 } else { 41 } } else { if ($window -eq '300') { 97 } else { 58 } }) }
@@ -248,13 +310,13 @@ function Update-Icons {
                 elseif ($config.light -and $used -gt 80) { $color = [Drawing.Color]::FromArgb(157,72,0) }
                 $shown = if ($config.remaining) { 100-$used } else { $used }
                 $value = '{0:0}' -f $shown
-                $meaning = if ($config.remaining) { "$value% tilbage" } else { "$value% brugt" }
+                $meaning = if ($config.remaining) { "$value% $(T 'tilbage')" } else { "$value% $(T 'brugt')" }
                 if ($script:demoMode) { $meaning += ' (demo)' }
                 elseif ($provider -eq 'Claude' -or $script:codexStatus -like 'Sidst*') { $meaning += " | $status" }
-            } elseif ($reset -and $reset -le $now) { $meaning = 'Afventer ny måling' }
+            } elseif ($reset -and $reset -le $now) { $meaning = T 'Afventer ny måling' }
             $tip = "$provider $period | $meaning"
             if ($reset) {
-                $resetText = ' | Nul ' + $reset.ToString('dd/MM HH:mm')
+                $resetText = ' | ' + (T 'Nul') + ' ' + $reset.ToString('dd/MM HH:mm')
                 if (($tip.Length + $resetText.Length) -gt 63) { $tip = $tip.Substring(0, 63-$resetText.Length) }
                 $tip += $resetText
             }
@@ -270,7 +332,7 @@ $menu.Add_Opening({
     $modeItem.Checked = $config.remaining
     $themeItem.Checked = $config.light
     $demoItem.Checked = $script:demoMode
-    foreach ($item in $providerMenu.DropDownItems) { $item.Checked = $item.Text -eq $config.provider }
+    foreach ($item in $providerMenu.DropDownItems) { $item.Checked = $item.Tag -eq $config.provider }
     foreach ($item in $intervalMenu.DropDownItems) { $item.Checked = $item.Tag -eq $config.seconds }
 })
 $refreshItem.Add_Click({ $script:nextRefresh = [DateTime]::MinValue })
@@ -292,7 +354,7 @@ $timer.Add_Tick({
             $script:codexStatus = ''
             $script:lastGood = Get-Date
         } elseif ($script:codexData.Count) {
-            $script:codexStatus = 'Sidst ' + $script:lastGood.ToString('dd/MM HH:mm')
+            $script:codexStatus = 'Sidst'
         } else {
             $script:codexStatus = if ($jobErrors.Count) { $jobErrors[0].Exception.Message } else { 'Kvotedata utilgængelige' }
         }
